@@ -1,0 +1,16 @@
+# Minimal working demo manifest. No URL plugins, no proxy.
+# Pair with: jars/paper-1.20.4.jar (download from PaperMC)
+# Then: mc-operator serve --manifest examples/demo.yaml --addr :8080
+
+apiVersion: mc-operator/v1
+
+proxy:
+  enabled: false
+
+servers:
+  - name: mc-demo
+    type: paper
+    version: "1.20.4"
+    port: 25600
+    resource:
+      memoryMB: 1024

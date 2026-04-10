@@ -1,0 +1,18 @@
+apiVersion: mc-operator/v1
+
+proxy:
+  enabled: false
+
+servers:
+  - name: mc-demo
+    type: paper
+    version: "1.20.4"
+    port: 25600
+    resource:
+      memoryMB: 1024
+  - name: mc-demo2
+    type: paper
+    version: "1.20.4"
+    port: 25601
+    resource:
+      memoryMB: 1024

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mc-operator</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">MC</span>
+      <div>
+        <div class="title">mc-operator</div>
+        <div class="subtitle">Minecraft GitOps control plane</div>
+      </div>
+    </div>
+    <div class="status-pill" id="connection-status">connecting...</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Servers</h2>
+        <button id="refresh-btn" class="btn">refresh</button>
+      </div>
+      <div id="server-grid" class="grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Live events</h2>
+        <button id="clear-events" class="btn">clear</button>
+      </div>
+      <ul id="event-log" class="event-log"></ul>
+    </section>
+  </main>
+
+  <aside id="detail-drawer" class="drawer">
+    <div id="detail-body"></div>
+  </aside>
+
+  <script src="/app.js"></script>
+</body>
+</html>

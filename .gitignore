@@ -1,0 +1,27 @@
+# Built binaries
+/mc-operator
+/mc-imagegen
+*.exe
+*.exe~
+/dist/
+/bin/
+
+# Runtime state — must never be committed
+/.mc-operator/
+state.json
+*.log
+
+# Test / scratch artifacts
+.tmp-*
+/cache/
+
+# Server / plugin jars are large binaries — keep them out of git
+/jars/
+*.jar
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

@@ -1,0 +1,95 @@
+// Example Jenkins declarative pipeline that builds a Minecraft server image,
+// pushes it to a registry, and triggers an mc-operator deploy.
+//
+// Required Jenkins credentials:
+//   - mc-operator-token  (Secret text) — bearer token matching --jenkins-token
+//   - registry-creds     (Username/Password) — push credentials for REGISTRY
+//
+// Required Jenkins env / parameters:
+//   - SERVER_NAME        — manifest server name (e.g. "lobby")
+//   - PAPER_BUILD        — Paper build number (or use a fixed jar in your repo)
+
+pipeline {
+    agent any
+
+    environment {
+        REGISTRY     = 'registry.example.com'
+        IMAGE        = "${REGISTRY}/mc-${SERVER_NAME}:${env.BUILD_NUMBER}"
+        MC_OPERATOR  = 'http://mc-operator.internal:8080'
+        MC_TOKEN     = credentials('mc-operator-token')
+    }
+
+    stages {
+        stage('Fetch Paper jar') {
+            steps {
+                sh '''
+                    set -eux
+                    mkdir -p build
+                    curl -fsSLo build/server.jar \
+                      https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/${PAPER_BUILD}/downloads/paper-1.20.4-${PAPER_BUILD}.jar
+                '''
+            }
+        }
+
+        stage('Render Dockerfile') {
+            steps {
+                // Reuse the mc-operator image generator so the Dockerfile is
+                // identical to what mc-operator would have produced locally.
+                // The labels it sets are what enables drift detection.
+                sh '''
+                    set -eux
+                    mc-imagegen render \
+                      --type paper \
+                      --version 1.20.4 \
+                      --memory 2048 \
+                      --jar server.jar \
+                      -o build/Dockerfile
+                '''
+            }
+        }
+
+        stage('Build & push image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'registry-creds',
+                    usernameVariable: 'REG_USER',
+                    passwordVariable: 'REG_PASS')]) {
+                    sh '''
+                        set -eux
+                        echo "$REG_PASS" | docker login "$REGISTRY" -u "$REG_USER" --password-stdin
+                        docker build -t "$IMAGE" build/
+                        docker push "$IMAGE"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy via mc-operator') {
+            steps {
+                sh '''
+                    set -eux
+                    curl -fsSL --max-time 10 -X POST "$MC_OPERATOR/api/v1/triggers/jenkins" \
+                      -H "Authorization: Bearer $MC_TOKEN" \
+                      -H "Content-Type: application/json" \
+                      -d @- <<EOF
+{
+  "server":         "${SERVER_NAME}",
+  "image":          "${IMAGE}",
+  "revision":       "${GIT_COMMIT}",
+  "buildId":        "${BUILD_NUMBER}",
+  "jobName":        "${JOB_NAME}",
+  "strict":         true,
+  "configOverlay":  true
+}
+EOF
+                '''
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "Deploy failed — check the mc-operator dashboard history for the drift / rollback details."
+        }
+    }
+}

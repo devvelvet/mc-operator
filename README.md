@@ -213,3 +213,7 @@ Future:
 - Multi-host support via per-server Docker contexts
 - World data backups before deploy
 - Web dashboard auth
+
+## License
+
+MIT — see [LICENSE](LICENSE).
